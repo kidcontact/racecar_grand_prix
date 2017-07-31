@@ -1,6 +1,4 @@
 #!/usr/bin/python2
-#
-
 import rospy
 import numpy as np
 import math
@@ -12,7 +10,8 @@ from std_msgs.msg import Float32
 class MotionPlannerNode:
     def __init__(self):
         rospy.Subscriber('/scan', LaserScan, self.scanner_callback)
-        self.cmd_pub = rospy.Publisher('/potential_field_error', Float32, queue_size=10)
+        self.cmd_pub = rospy.Publisher('potential_field_error', Float32, queue_size=10)
+        self.cmd_pub2 = rospy.Publisher('potential_field_speed', Float32, queue_size=10)
         
         self.force_scale_factor = 0.001
         self.minimum_repel_force = 0.02
@@ -48,11 +47,12 @@ class MotionPlannerNode:
         magnitude = math.sqrt(x_sum ** 2 + y_sum ** 2)
         theta = math.atan2(x_sum, y_sum)
 
-
         if theta > np.pi / 2 or theta < -np.pi / 2:
             magnitude = -magnitude
         
-        
+	self.cmd_pub.publish(theta)
+        self.cmd_pub2.publish(magnitude)        
+'''
         theta += self.K_d * (self.prev - theta)
 
         # minimum and maximum bounding for speed/steering
@@ -78,9 +78,10 @@ class MotionPlannerNode:
                 x_sum, y_sum, magnitude, theta)
         rospy.loginfo('speed: %s -- steering: %s',
                 speed, steering_angle)
+'''
 
 if __name__ == '__main__':
-    rospy.init_node('motion_planner')
+    rospy.init_node('potential_field')
     node = MotionPlannerNode()
     rospy.spin()
 
