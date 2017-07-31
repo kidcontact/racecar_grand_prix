@@ -28,4 +28,8 @@ include_directories(
 )
 
 catkin_install_python(PROGRAMS
+    scripts/vision_tracker.py
+    scripts/wall_tracker.py
+    scripts/bridge_tracker.py
+    scripts/prix_controller.py
     DESTINATION $(CATKIN_PACKAGE_BIN_DESTINATION))
