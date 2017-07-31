@@ -28,9 +28,12 @@ class blobDetectorNode:
         self.img = frame
         #cut frame
         frame = frame[200:400,:]
+        
         #end_img = CvBridge.cv2_to_imgmsg(msg, 'passthrough')
+        
         #call thresholdImg function and return the thresholded image as tImage
         tImage = self.thresholdImg(frame)
+        
         #call getContours function and return the contour data as found_contours and the image as cImage
         found_contours, cImage = self.getContours(tImage)
         if contours[0] > 0:
@@ -38,6 +41,7 @@ class blobDetectorNode:
         else:
             self.track_pos = 4
         #cImage = self.drawRect(tImage,cImage)
+        
         #call findCenter function and return the center point of the cone
         self.pub.publish(self.bridge.cv2_to_imgmsg(cImage, 'bgr8'))
         
@@ -68,7 +72,10 @@ class blobDetectorNode:
         centerX = x+w/2
         centerY = y+h/2
         
+        #find distance from center
         self.error_dist = centerX-len(frame[0])/2
+        
+        #display error on top of box
         text = str(self.error_dist)
         linetype = 4
         font = cv2.FONT_HERSHEY_SIMPLEX
