@@ -16,9 +16,11 @@ class blobDetectorNode:
         self.HSV_RANGES = [np.array([0,175,175]), np.array([5,255,255])]
         #self.cmd_pub = rospy.Publisher("ackermann_cmd", AckermannDriveStamped, queue_size=10)
         self.pub = rospy.Publisher('vision_test', Image, queue_size=10)
+        self.track_pub = rospy.Publisher('track_position', Int32, queue_size=10)
         self.bridge = CvBridge()
         self.img = 0
-        self.error_dist
+        self.error_dist = 0
+        self.track_pos = 0
 
     def blobDetectorCallback(self, msg):
         #create openCV image (frame)
@@ -31,10 +33,16 @@ class blobDetectorNode:
         tImage = self.thresholdImg(frame)
         #call getContours function and return the contour data as found_contours and the image as cImage
         found_contours, cImage = self.getContours(tImage)
-        
+        if contours[0] > 0:
+            self.track_pos = 3
+        else:
+            self.track_pos = 4
         #cImage = self.drawRect(tImage,cImage)
         #call findCenter function and return the center point of the cone
         self.pub.publish(self.bridge.cv2_to_imgmsg(cImage, 'bgr8'))
+        
+        #publish track position
+        #self.track_pub.publish(self.track_pos)
         
         
     def convertToHSV(self, image):
@@ -61,13 +69,14 @@ class blobDetectorNode:
         centerY = y+h/2
         
         self.error_dist = centerX-len(frame[0])/2
-        text = str(distOff)
+        text = str(self.error_dist)
         linetype = 4
         font = cv2.FONT_HERSHEY_SIMPLEX
         color = (255,255,255)
         fontScale = 1
         cv2.putText(frame,text,point,font,fontScale,color,linetype)
         cv2.imshow('image', frame)
+        cv2.waitKey(10000)
         return frame
          """ this stuff is driving stuff
         
