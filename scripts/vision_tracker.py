@@ -13,7 +13,7 @@ class blobDetectorNode:
         #self.set HSV(0,0)
         self.HSV_RANGES = [np.array([0,175,175]), np.array([5,255,255])]
         self.cmd_pub = rospy.Publisher("ackermann_cmd", AckermannDriveStamped, queue_size=10)
-        self.pub = rospy.Publisher('echo_topic', Image, queue_size=10)
+        self.pub = rospy.Publisher('vision_test', Image, queue_size=10)
         self.bridge = CvBridge()
         self.img = 0
 
@@ -21,13 +21,12 @@ class blobDetectorNode:
         #create openCV image (frame)
         frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         self.img = frame
-        speed = 0
         #end_img = CvBridge.cv2_to_imgmsg(msg, 'passthrough')
         #call thresholdImg function and return the thresholded image as tImage
         tImage = self.thresholdImg(frame)
         #call getContours function and return the contour data as found_contours and the image as cImage
         found_contours, cImage = self.getContours(tImage)
-        cImage = self.drawRect(tImage,cImage)
+        #cImage = self.drawRect(tImage,cImage)
         #call findCenter function and return the center point of the cone
         self.pub.publish(self.bridge.cv2_to_imgmsg(cImage, 'bgr8'))
         
@@ -48,6 +47,7 @@ class blobDetectorNode:
         #TODO return contors and label self.image with detected contours
         _, contours, _ = cv2.findContours(Thresh,1,2)
         largest = self.sortContours(contours)[0]
+         """ this stuff is driving stuff
         x,y,w,h = cv2.boundingRect(largest)
         cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
         centerX = x+w/2
@@ -65,7 +65,7 @@ class blobDetectorNode:
         point = (x-100 ,y)
         cv2.putText(frame,text,point,font,fontScale,color,linetype)
         cv2.imshow('image', frame)
-        
+       
         if size > 130:
             speed = 0
             
@@ -79,7 +79,8 @@ class blobDetectorNode:
         output_msg.drive.speed = rospy.Time.now()
         output_msg.drive.steering_angle = angle
         output_msg.drive.speed = speed    
-        self.cmd_pub.publish(output_msg)    
+        self.cmd_pub.publish(output_msg)
+        """
         cv2.waitKey(1)
         return frame
     def sortContours(self, contours):
