@@ -61,15 +61,15 @@ class PrixControllerNode:
 
     def vision_error_callback(self, msg):
         if self.track_position == TrackPosition.YELLOW_BRICK:
-            pid_control(msg.data, self.speed, self.K_vision)
+            self.pid_control(msg.data, self.speed, self.K_vision)
 
     def wall_error_callback(self, msg):
         if self.track_position == TrackPosition.BEFORE_WATER or self.track_position == TrackPosition.AFTER_WATER:
-            pid_control(msg.data, self.speed, self.K_wall)
+            self.pid_control(msg.data, self.speed, self.K_wall)
 
     def potential_field_error_callback(self, msg):
         if self.track_position == TrackPosition.START:
-            pid_control(msg.data, self.speed, self.K_potential)
+            self.pid_control(msg.data, self.speed, self.K_potential)
     
 
 if __name__ == '__main__':

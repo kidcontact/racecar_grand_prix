@@ -10,7 +10,7 @@ class wallController:
 	def __init__(self):
 		# Subscription and Publication
 		rospy.Subscriber("/scan", LaserScan, self.wall_controller)
-		self.cmd_pub = rospy.Publisher("/wall_error", Float32, queue_size=10)
+		self.cmd_pub = rospy.Publisher("wall_error", Float32, queue_size=10)
 		
 		# Desired distance from the wall
 		self.d_des = 0.4 #left_.4 right_.9
