@@ -5,13 +5,12 @@ import math
 import heapq
 from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32MultiArray
 
 class MotionPlannerNode:
     def __init__(self):
         rospy.Subscriber('/scan', LaserScan, self.scanner_callback)
-        self.cmd_pub = rospy.Publisher('potential_field_error', Float32, queue_size=10)
-        self.cmd_pub2 = rospy.Publisher('potential_field_speed', Float32, queue_size=10)
+        self.cmd_pub = rospy.Publisher('potential_field_error', Float32MultiArray, queue_size=10)
         
         self.force_scale_factor = 0.001
         self.minimum_repel_force = 0.02
@@ -50,8 +49,10 @@ class MotionPlannerNode:
         if theta > np.pi / 2 or theta < -np.pi / 2:
             magnitude = -magnitude
         
-	self.cmd_pub.publish(theta)
-        self.cmd_pub2.publish(magnitude)        
+        msg = Float32MultiArray()
+        msg.data = [theta, magnitude]
+        self.cmd_pub.publish(msg)
+        
 '''
         theta += self.K_d * (self.prev - theta)
 
