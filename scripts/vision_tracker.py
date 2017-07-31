@@ -6,18 +6,23 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from ackermann_msgs.msg import AckermannDriveStamped 
 import numpy as np
+from std_msgs.msg import Int32
 
 class blobDetectorNode:
     def __init__(self):
-        #rospy.Subscriber('/camera/rgb/image_rect_color', Image, self.blobDetectorCallback)
+        rospy.Subscriber('/camera/rgb/image_rect_color', Image, self.blobDetectorCallback)
         #self.set HSV(0,0)
-        img = cv2.imread('yellow.jpeg')
-        self.blobDetectorCallback(img)
+        self.bridge = CvBridge()
+        
+        #to run without robot
+        #img = cv2.imread('yellow.jpeg')
+        #self.blobDetectorCallback(img)
+        
         self.HSV_RANGES = [np.array([0,175,175]), np.array([5,255,255])]
         #self.cmd_pub = rospy.Publisher("ackermann_cmd", AckermannDriveStamped, queue_size=10)
         self.pub = rospy.Publisher('vision_test', Image, queue_size=10)
         self.track_pub = rospy.Publisher('track_position', Int32, queue_size=10)
-        self.bridge = CvBridge()
+        
         self.img = 0
         self.error_dist = 0
         self.track_pos = 0
@@ -27,9 +32,10 @@ class blobDetectorNode:
         frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         self.img = frame
         #cut frame
-        frame = frame[200:400,:]
         
-        #end_img = CvBridge.cv2_to_imgmsg(msg, 'passthrough')
+        #frame = frame[200:400,:]
+        
+        
         
         #call thresholdImg function and return the thresholded image as tImage
         tImage = self.thresholdImg(frame)
@@ -40,13 +46,13 @@ class blobDetectorNode:
             self.track_pos = 3
         else:
             self.track_pos = 4
-        #cImage = self.drawRect(tImage,cImage)
+        cImage = self.drawRect(tImage,cImage)
         
-        #call findCenter function and return the center point of the cone
+        
         self.pub.publish(self.bridge.cv2_to_imgmsg(cImage, 'bgr8'))
         
         #publish track position
-        #self.track_pub.publish(self.track_pos)
+        self.track_pub.publish(self.track_pos)
         
         
     def convertToHSV(self, image):
