@@ -5,7 +5,7 @@ import rospy
 from aenum import Enum
 from namedlist import namedlist
 from ackermann_msgs.msg import AckermannDriveStamped
-from std_msgs.msg import Int32, Float32
+from std_msgs.msg import Int32, Float32, Float32MultiArray
 from sensor_msgs.msg import Joy
 
 class TrackPosition(Enum):
@@ -24,7 +24,7 @@ class PrixControllerNode:
         PidValues= namedlist('PidValues', ['p', 'd', 'i', ('prev', 0), ('derivator', 0), ('integrator', 0)])
         self.K_vision    = PidValues(p = 0, d = 0, i = 0)
         self.K_wall      = PidValues(p = 1, d = 0.03, i = 0)
-        self.K_potential = PidValues(p = 0, d = 0, i = 0)
+        self.K_potential = PidValues(p = 1, d = 0, i = 0)
         self.speed = 0.5
         self.max_steering = 0.32
         self.drive_enabled = False
@@ -32,7 +32,7 @@ class PrixControllerNode:
         rospy.Subscriber('track_position', Int32, self.track_position_callback)
         rospy.Subscriber('vision_error', Float32, self.vision_error_callback)
         rospy.Subscriber('wall_error', Float32, self.wall_error_callback)
-        rospy.Subscriber('potential_field_error', Float32, self.potential_field_error_callback)
+        rospy.Subscriber('potential_field_error', Float32MultiArray, self.potential_field_error_callback)
         rospy.Subscriber('/joy', Joy, self.joy_callback) 
 
     def pid_control(self, error, speed, K):
@@ -71,7 +71,8 @@ class PrixControllerNode:
 
     def potential_field_error_callback(self, msg):
         if self.track_position == TrackPosition.START:
-            self.pid_control(msg.data, self.speed, self.K_potential)
+            speed = max(-self.speed, min(msg.data[1], self.speed))
+            self.pid_control(msg.data[0], speed, self.K_potential)
     
 
 if __name__ == '__main__':

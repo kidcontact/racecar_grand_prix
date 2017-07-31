@@ -1,5 +1,6 @@
 <launch>
     <include file="$(find racecar)/launch/teleop.launch" />
     <node name="wall_tracker" pkg="racecar_grand_prix" type="wall_tracker.py" />
+    <node name="potential_field" pkg="racecar_grand_prix" type="potential_field.py" />
     <node name="prix_controller" pkg="racecar_grand_prix" type="prix_controller.py" />
 </launch>
