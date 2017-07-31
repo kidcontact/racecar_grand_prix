@@ -49,8 +49,6 @@ class MotionPlannerNode:
         if theta > np.pi / 2 or theta < -np.pi / 2:
             magnitude = -magnitude
         
-        rospy.loginfo('%s -- %s', theta, magnitude)
-
         msg = Float32MultiArray()
         msg.data = [theta, magnitude]
         self.cmd_pub.publish(msg)
