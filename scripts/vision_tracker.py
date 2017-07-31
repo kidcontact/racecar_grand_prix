@@ -16,6 +16,7 @@ class blobDetectorNode:
         self.pub = rospy.Publisher('vision_test', Image, queue_size=10)
         self.bridge = CvBridge()
         self.img = 0
+        self.error_dist
 
     def blobDetectorCallback(self, msg):
         #create openCV image (frame)
@@ -26,6 +27,7 @@ class blobDetectorNode:
         tImage = self.thresholdImg(frame)
         #call getContours function and return the contour data as found_contours and the image as cImage
         found_contours, cImage = self.getContours(tImage)
+        
         #cImage = self.drawRect(tImage,cImage)
         #call findCenter function and return the center point of the cone
         self.pub.publish(self.bridge.cv2_to_imgmsg(cImage, 'bgr8'))
@@ -47,24 +49,31 @@ class blobDetectorNode:
         #TODO return contors and label self.image with detected contours
         _, contours, _ = cv2.findContours(Thresh,1,2)
         largest = self.sortContours(contours)[0]
-         """ this stuff is driving stuff
+        
         x,y,w,h = cv2.boundingRect(largest)
         cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
         centerX = x+w/2
         centerY = y+h/2
-        distOff = centerX-len(frame[0])/2
+        
+        self.error_dist = centerX-len(frame[0])/2
+        text = str(distOff)
+        linetype = 4
         font = cv2.FONT_HERSHEY_SIMPLEX
         color = (255,255,255)
         fontScale = 1
+        cv2.putText(frame,text,point,font,fontScale,color,linetype)
+        cv2.imshow('image', frame)
+        return frame
+         """ this stuff is driving stuff
+        
         size = h
-        linetype = 4
+        
         speed = .5
         angle = 0
         constant = 15
-        text = str(distOff)
+        
         point = (x-100 ,y)
-        cv2.putText(frame,text,point,font,fontScale,color,linetype)
-        cv2.imshow('image', frame)
+        
        
         if size > 130:
             speed = 0
@@ -82,7 +91,7 @@ class blobDetectorNode:
         self.cmd_pub.publish(output_msg)
         """
         cv2.waitKey(1)
-        return frame
+        
     def sortContours(self, contours):
         #TODO fill in this code (Stephan I think is the only one with a finished function for this)
         def greater(a, b):
