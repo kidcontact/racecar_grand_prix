@@ -6,6 +6,7 @@ from aenum import Enum
 from namedlist import namedlist
 from ackermann_msgs.msg import AckermannDriveStamped
 from std_msgs.msg import Int32, Float32
+from sensor_msgs.msg import Joy
 
 class TrackPosition(Enum):
     NOT_STARTED = -1
@@ -32,8 +33,9 @@ class PrixControllerNode:
         rospy.Subscriber('vision_error', Float32, self.vision_error_callback)
         rospy.Subscriber('wall_error', Float32, self.wall_error_callback)
         rospy.Subscriber('potential_field_error', Float32, self.potential_field_error_callback)
-    
-    def pid_control(error, speed, K):
+        rospy.Subscriber('/joy', Joy, self.joy_callback) 
+
+    def pid_control(self, error, speed, K):
         K.integrator += error
         K.derivator = K.prev - error
         K.prev = error
