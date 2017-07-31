@@ -1,8 +1,6 @@
 #!/usr/bin/python
 import rospy
 import numpy as np
-import time
-from ackermann_msgs.msg import AckermannDriveStamped
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32
 
@@ -14,11 +12,6 @@ class wallController:
 		
 		# Desired distance from the wall
 		self.d_des = 0.4 #left_.4 right_.9
-		self.speed_des = 0
-
-		# Controller gains
-		self.Kp = .04
-		self.Kd = .03
 
 		# Error variables
 		self.error = 0
