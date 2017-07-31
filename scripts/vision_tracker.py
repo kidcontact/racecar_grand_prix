@@ -9,10 +9,12 @@ import numpy as np
 
 class blobDetectorNode:
     def __init__(self):
-        rospy.Subscriber('/camera/rgb/image_rect_color', Image, self.blobDetectorCallback)
+        #rospy.Subscriber('/camera/rgb/image_rect_color', Image, self.blobDetectorCallback)
         #self.set HSV(0,0)
+        img = cv2.imread('yellow.jpeg')
+        self.blobDetectorCallback(img)
         self.HSV_RANGES = [np.array([0,175,175]), np.array([5,255,255])]
-        self.cmd_pub = rospy.Publisher("ackermann_cmd", AckermannDriveStamped, queue_size=10)
+        #self.cmd_pub = rospy.Publisher("ackermann_cmd", AckermannDriveStamped, queue_size=10)
         self.pub = rospy.Publisher('vision_test', Image, queue_size=10)
         self.bridge = CvBridge()
         self.img = 0
@@ -22,6 +24,8 @@ class blobDetectorNode:
         #create openCV image (frame)
         frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
         self.img = frame
+        #cut frame
+        frame = frame[200:400,:]
         #end_img = CvBridge.cv2_to_imgmsg(msg, 'passthrough')
         #call thresholdImg function and return the thresholded image as tImage
         tImage = self.thresholdImg(frame)
@@ -31,6 +35,7 @@ class blobDetectorNode:
         #cImage = self.drawRect(tImage,cImage)
         #call findCenter function and return the center point of the cone
         self.pub.publish(self.bridge.cv2_to_imgmsg(cImage, 'bgr8'))
+        
         
     def convertToHSV(self, image):
         image_dup = image
