@@ -28,6 +28,8 @@ include_directories(
 )
 
 catkin_install_python(PROGRAMS
+    scripts/ar_localization.py
+    scripts/start_tracker.py
     scripts/vision_tracker.py
     scripts/wall_tracker.py
     scripts/bridge_tracker.py

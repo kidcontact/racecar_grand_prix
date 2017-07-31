@@ -7,14 +7,7 @@ from namedlist import namedlist
 from ackermann_msgs.msg import AckermannDriveStamped
 from std_msgs.msg import Int32, Float32, Float32MultiArray
 from sensor_msgs.msg import Joy
-
-class TrackPosition(Enum):
-    NOT_STARTED = -1
-    START = 0
-    BRIDGE = 1
-    BEFORE_WATER = 2
-    YELLOW_BRICK = 3
-    AFTER_WATER = 4
+from ar_localization import TrackPosition
 
 class PrixControllerNode:
     def __init__(self):
@@ -41,8 +34,9 @@ class PrixControllerNode:
         K.prev = error
         steering_angle = K.p * error + K.i * K.integrator + K.d * K.derivator
         
-        # bound steering angle to saturation value
+        # bound steering angle and speed to saturation value
         steering_angle = max(-self.max_steering, min(steering_angle, self.max_steering))
+        speed = max(-self.speed, min(speed, self.speed))
 
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = rospy.Time.now()
@@ -66,13 +60,12 @@ class PrixControllerNode:
             self.pid_control(msg.data, self.speed, self.K_vision)
 
     def wall_error_callback(self, msg):
-        if self.track_position == TrackPosition.BEFORE_WATER or self.track_position == TrackPosition.AFTER_WATER:
+        if self.track_position == TrackPosition.BRIDGE or self.track_position == TrackPosition.AFTER_WATER:
             self.pid_control(msg.data, self.speed, self.K_wall)
 
     def potential_field_error_callback(self, msg):
         if self.track_position == TrackPosition.START:
-            speed = max(-self.speed, min(msg.data[1], self.speed))
-            self.pid_control(msg.data[0], speed, self.K_potential)
+            self.pid_control(msg.data[0], msg.data[1], self.K_potential)
     
 
 if __name__ == '__main__':
