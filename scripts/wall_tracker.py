@@ -46,6 +46,6 @@ class wallController:
 		self.cmd_pub.publish(self.error)
 
 if __name__ == "__main__":
-    rospy.init_node("wall_controller")
+    rospy.init_node("wall_tracker")
     node = wallController()
     rospy.spin()
