@@ -14,7 +14,7 @@ class MotionPlannerNode:
         
         self.force_scale_factor = 0.001
         self.minimum_repel_force = 0.02
-        self.forward_force = 3
+        self.forward_force = 0
         self.num_samples = 10 # n largest magnitudes will be used
         self.max_speed = 1.2
         self.max_steering = 0.32
@@ -28,7 +28,7 @@ class MotionPlannerNode:
         ranges = np.array(ranges, dtype=np.float32)
 
         # calculate repulsive forces for all points found by scanner
-        ranges = ranges ** -2
+        ranges = ranges ** -1
         ranges[ranges < self.minimum_repel_force] = 0 
         ranges = ranges * self.force_scale_factor
 

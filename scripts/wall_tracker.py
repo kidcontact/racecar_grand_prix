@@ -11,7 +11,7 @@ class wallController:
 		self.cmd_pub = rospy.Publisher("wall_error", Float32, queue_size=10)
 		
 		# Desired distance from the wall
-		self.d_des = 0.4 #left_.4 right_.9
+		self.d_des = 0.8 #left_.4 right_.9
 
 		# Error variables
 		self.error = 0
@@ -24,8 +24,8 @@ class wallController:
  		smallestDistance = 300
 
 		if self.wall_orientation == 0:
-			a = 172
-			b = 300
+			a = 272
+			b = 400
 		elif self.wall_orientation == 1:
 			a = 780
 			b = 908

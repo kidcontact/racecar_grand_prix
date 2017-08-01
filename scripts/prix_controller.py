@@ -16,9 +16,9 @@ class PrixControllerNode:
         
         PidValues= namedlist('PidValues', ['p', 'd', 'i', ('prev', 0), ('derivator', 0), ('integrator', 0)])
         self.K_vision    = PidValues(p = 0, d = 0, i = 0)
-        self.K_wall      = PidValues(p = 1, d = 0.03, i = 0)
-        self.K_potential = PidValues(p = 1, d = 0, i = 0)
-        self.speed = 0.5
+        self.K_wall      = PidValues(p = 5, d = 0.2, i = 0)
+        self.K_potential = PidValues(p = 2, d = 0.4, i = 0)
+        self.speed = 0.8
         self.max_steering = 0.32
         self.drive_enabled = False
 
@@ -48,6 +48,9 @@ class PrixControllerNode:
     def joy_callback(self, msg):
         buttons = msg.buttons
         if buttons[2] == 1: # x
+            self.K_potential.integrator = 0
+            self.K_potential.derivator = 0
+            self.K_potential.prev = 0
             self.drive_enabled = True
         elif buttons[3] == 1: # y
             self.drive_enabled = False
@@ -65,7 +68,7 @@ class PrixControllerNode:
 
     def potential_field_error_callback(self, msg):
         if self.track_position == TrackPosition.START:
-            self.pid_control(msg.data[0], msg.data[1], self.K_potential)
+            self.pid_control(msg.data[0], self.speed, self.K_potential)
     
 
 if __name__ == '__main__':
