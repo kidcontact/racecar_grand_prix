@@ -17,7 +17,7 @@ class PrixControllerNode:
         PidValues= namedlist('PidValues', ['p', 'd', 'i', ('prev', 0), ('derivator', 0), ('integrator', 0)])
         self.K_vision    = PidValues(p = 0, d = 0, i = 0)
         self.K_wall      = PidValues(p = 5, d = 0.2, i = 0)
-        self.K_potential = PidValues(p = 2, d = 0.4, i = 0)
+        self.K_potential = PidValues(p = 2, d = 0.2, i = 0)
         self.speed = 0.8
         self.max_steering = 0.32
         self.drive_enabled = False
