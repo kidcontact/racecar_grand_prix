@@ -36,12 +36,15 @@ class MotionPlannerNode:
         angles = np.arange(msg.angle_min + cutoff, msg.angle_max - cutoff, msg.angle_increment)
         x = np.sin(angles) * ranges
         y = np.cos(angles) * ranges
-        magnitudes = np.sqrt(x ** 2 + y ** 2)
-        samples = heapq.nlargest(len(magnitudes), xrange(len(magnitudes)), magnitudes.take)
+        
+        
+
+        #magnitudes = np.sqrt(x ** 2 + y ** 2)
+        #samples = heapq.nlargest(len(magnitudes), xrange(len(magnitudes)), magnitudes.take)
         
         # compute combined force vector (-np.sum to make the forces repulsive)
-        x_sum = -np.sum(x[samples])
-        y_sum = -np.sum(y[samples])
+        x_sum = -np.sum(x)
+        y_sum = -np.sum(y)
         y_sum += self.forward_force
         magnitude = math.sqrt(x_sum ** 2 + y_sum ** 2)
         theta = math.atan2(x_sum, y_sum)
@@ -49,8 +52,8 @@ class MotionPlannerNode:
         if theta > np.pi / 2 or theta < -np.pi / 2:
             magnitude = -magnitude
             theta = -theta
-        rospy.loginfo('x_sum: %s -- y_sum: %s -- magnitude: %s -- theta: %s',
-                x_sum, y_sum, magnitude, theta)
+       # rospy.loginfo('x_sum: %s -- y_sum: %s -- magnitude: %s -- theta: %s',
+               # x_sum, y_sum, magnitude, theta)
         msg = Float32MultiArray()
         msg.data = [theta, magnitude]
         self.cmd_pub.publish(msg)

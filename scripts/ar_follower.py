@@ -22,7 +22,7 @@ class ArFollowerNode:
             self.frames_since_seen = 0
             marker = None
             for m in markers:
-                if m.id == 7:
+                if m.id == 0:
                     marker = m
             if marker is None:
                 return
@@ -32,10 +32,9 @@ class ArFollowerNode:
             orientation = marker.pose.pose.orientation
 
 
-            self.speed = 0.6
-            if position.z < 2:
-                self.speed = 0
+            self.speed = 0.7
             drive_cmd.drive.speed = self.speed
+            drive_cmd.drive.acceleration = 0.5
             self.steering_angle = -math.atan2(position.x, position.z) * 0.75
             drive_cmd.drive.steering_angle = self.steering_angle
 

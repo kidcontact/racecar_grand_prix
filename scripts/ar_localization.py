@@ -15,14 +15,14 @@ class TrackPosition(Enum):
     AFTER_WATER = 3
 
 tag_ids = {
-    7: TrackPosition.BRIDGE,
+    5: TrackPosition.BRIDGE,
     6: TrackPosition.YELLOW_BRICK,
-    5: TrackPosition.AFTER_WATER
+    7: TrackPosition.AFTER_WATER
 }
 
 class ArLocalizationNode:
     def __init__(self):
-        self.track_position = TrackPosition.AFTER_WATER
+        self.track_position = TrackPosition.START
         self.position_pub = rospy.Publisher('track_position', Int32, queue_size=1)
         self.position_pub.publish(self.track_position.value)
         rospy.Subscriber('/ar_pose_marker', AlvarMarkers, self.marker_callback)

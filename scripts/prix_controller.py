@@ -15,10 +15,12 @@ class PrixControllerNode:
         self.cmd_pub = rospy.Publisher('/ackermann_cmd_mux/input/navigation', AckermannDriveStamped, queue_size=5)
         
         PidValues= namedlist('PidValues', ['p', 'd', 'i', ('prev', 0), ('derivator', 0), ('integrator', 0)])
-        self.K_vision    = PidValues(p = 0.01, d = 0, i = 0)
-        self.K_wall      = PidValues(p = 5, d = 0.2, i = 0)
-        self.K_potential = PidValues(p = 7.0, d = 0.5, i = 0.0)
-        self.speed = 4
+        self.K_vision    = PidValues(p = -0.01, d = 0, i = 0)
+        self.K_wall      = PidValues(p = 1.5, d = 0, i = 0)
+        self.K_potential = PidValues(p = 4.0, d = 0.2, i = 0.0)
+        # working potential field values: 4, 2
+        self.speed = 3.5
+        self.min_speed = 3.5
         self.max_steering = 0.34
         self.drive_enabled = False
 
@@ -35,10 +37,12 @@ class PrixControllerNode:
         steering_angle = K.p * error + K.i * K.integrator + K.d * K.derivator
 
         # bound steering angle and speed to saturation value
-        steering_angle = max(-self.max_steering, min(steering_angle, self.max_steering))
-        speed = 0.4 / abs(steering_angle)
-        if speed < 1.7:
-            speed = 2
+        steering_cap = self.max_steering
+        steering_angle = max(-steering_cap, min(steering_angle, steering_cap))
+        if steering_angle != 0:
+            speed = 0.4 / abs(steering_angle)
+        if speed < self.min_speed:
+            speed = self.min_speed
         speed = max(-self.speed, min(speed, self.speed))
         
         #if abs(steering_angle) > 0.15:

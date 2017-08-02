@@ -11,32 +11,47 @@ class wallController:
 		self.cmd_pub = rospy.Publisher("wall_error", Float32, queue_size=10)
 		
 		# Desired distance from the wall
-		self.d_des = 0.8 #left_.4 right_.9
+		self.d_des = 0.68 #left_.4 right_.9
 
 		# Error variables
 		self.error = 0
 
 		# Right(0) or left(1)
-		self.wall_orientation = 0
+		self.wall_orientation = 1
+
+                self.start = int((np.pi / 4) * (720 / np.pi))
+                self.end = int((np.pi / 2) * (720 / np.pi))
 
 	def wall_controller(self, scan):
 
  		smallestDistance = 300
+                
+                r_ranges = scan.ranges[self.start:self.end]
+                l_ranges = scan.ranges[-self.end:-self.start]
+                
+                right_mean = np.mean(r_ranges)
+                left_mean = np.mean(l_ranges)
+                
+                if right_mean > left_mean:
+                    closest_point = np.min(l_ranges)
+                    scale = -1
+                    side = 'left'
+                else:
+                    closest_point = np.min(r_ranges)
+                    scale = 1
+                    side = 'right'
 
-		if self.wall_orientation == 0:
-			a = 272
-			b = 400
-		elif self.wall_orientation == 1:
-			a = 680
-			b = 808
-
-		for i in range(a, b):
-			if scan.ranges[i] < smallestDistance:
-				smallestDistance = scan.ranges[i]
- 				smallestIndex = i
-		self.error = self.d_des - smallestDistance
-		print 'error: ', self.error
-		self.cmd_pub.publish(self.error)
+                #closest_right_point = np.min(r_ranges)
+                #closest_left_point = np.min(l_ranges)
+                
+                print(closest_point)
+		self.error = self.d_des - closest_point
+		
+		
+                self.error *= scale
+		
+                print 'error: ' + str(self.error) + ' -- ' + side
+                self.cmd_pub.publish(self.error)
 
 if __name__ == "__main__":
     rospy.init_node("wall_tracker")
