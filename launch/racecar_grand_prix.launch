@@ -4,6 +4,8 @@
     <include file="$(find ar_localization)/launch/ar_tracker.launch" />
     <node name="ar_localization" pkg="racecar_grand_prix" type="ar_localization.py" />
     <node name="wall_tracker" pkg="racecar_grand_prix" type="wall_tracker.py" />
-    <node name="potential_field" pkg="racecar_grand_prix" type="potential_field.py" />
-    <node name="prix_controller" pkg="racecar_grand_prix" type="prix_controller.py" />
+    <node name="potential_field" output="screen" pkg="racecar_grand_prix" type="potential_field.py" />
+    <node name="vision_tracker" output="screen" pkg = "racecar_grand_prix" type="vision_tracker.py" />
+    
+    <node name="prix_controller" output="screen" pkg="racecar_grand_prix" type="prix_controller.py" />
 </launch>

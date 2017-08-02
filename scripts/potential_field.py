@@ -12,9 +12,9 @@ class MotionPlannerNode:
         rospy.Subscriber('/scan', LaserScan, self.scanner_callback)
         self.cmd_pub = rospy.Publisher('potential_field_error', Float32MultiArray, queue_size=10)
         
-        self.force_scale_factor = 0.001
+        self.force_scale_factor = 0.002
         self.minimum_repel_force = 0.02
-        self.forward_force = 0
+        self.forward_force = 5
         self.num_samples = 10 # n largest magnitudes will be used
         self.max_speed = 1.2
         self.max_steering = 0.32
@@ -48,7 +48,9 @@ class MotionPlannerNode:
 
         if theta > np.pi / 2 or theta < -np.pi / 2:
             magnitude = -magnitude
-        
+            theta = -theta
+        rospy.loginfo('x_sum: %s -- y_sum: %s -- magnitude: %s -- theta: %s',
+                x_sum, y_sum, magnitude, theta)
         msg = Float32MultiArray()
         msg.data = [theta, magnitude]
         self.cmd_pub.publish(msg)
@@ -80,7 +82,6 @@ class MotionPlannerNode:
         rospy.loginfo('speed: %s -- steering: %s',
                 speed, steering_angle)
 '''
-
 if __name__ == '__main__':
     rospy.init_node('potential_field')
     node = MotionPlannerNode()

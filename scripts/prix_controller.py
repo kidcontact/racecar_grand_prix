@@ -15,11 +15,11 @@ class PrixControllerNode:
         self.cmd_pub = rospy.Publisher('/ackermann_cmd_mux/input/navigation', AckermannDriveStamped, queue_size=5)
         
         PidValues= namedlist('PidValues', ['p', 'd', 'i', ('prev', 0), ('derivator', 0), ('integrator', 0)])
-        self.K_vision    = PidValues(p = 0, d = 0, i = 0)
+        self.K_vision    = PidValues(p = 0.01, d = 0, i = 0)
         self.K_wall      = PidValues(p = 5, d = 0.2, i = 0)
-        self.K_potential = PidValues(p = 2, d = 0.4, i = 0)
-        self.speed = 0.8
-        self.max_steering = 0.32
+        self.K_potential = PidValues(p = 7.0, d = 0.5, i = 0.0)
+        self.speed = 4
+        self.max_steering = 0.34
         self.drive_enabled = False
 
         rospy.Subscriber('track_position', Int32, self.track_position_callback)
@@ -33,10 +33,16 @@ class PrixControllerNode:
         K.derivator = K.prev - error
         K.prev = error
         steering_angle = K.p * error + K.i * K.integrator + K.d * K.derivator
-        
+
         # bound steering angle and speed to saturation value
         steering_angle = max(-self.max_steering, min(steering_angle, self.max_steering))
+        speed = 0.4 / abs(steering_angle)
+        if speed < 1.7:
+            speed = 2
         speed = max(-self.speed, min(speed, self.speed))
+        
+        #if abs(steering_angle) > 0.15:
+        #    speed *= 0.5
 
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = rospy.Time.now()
@@ -68,7 +74,7 @@ class PrixControllerNode:
 
     def potential_field_error_callback(self, msg):
         if self.track_position == TrackPosition.START:
-            self.pid_control(msg.data[0], self.speed, self.K_potential)
+            self.pid_control(msg.data[0], msg.data[1], self.K_potential)
     
 
 if __name__ == '__main__':
