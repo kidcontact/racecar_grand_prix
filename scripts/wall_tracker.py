@@ -27,8 +27,8 @@ class wallController:
 			a = 272
 			b = 400
 		elif self.wall_orientation == 1:
-			a = 780
-			b = 908
+			a = 680
+			b = 808
 
 		for i in range(a, b):
 			if scan.ranges[i] < smallestDistance:
