@@ -29,6 +29,7 @@ class blobDetectorNode:
         self.img = 0
         self.error_dist = 0
         self.track_pos = 0
+        self.error_dist = 0
 
     def blobDetectorCallback(self, msg):
         #while self.TrackPos == TrackPosition.YELLOW_BRICK:
@@ -39,7 +40,7 @@ class blobDetectorNode:
         frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
             #cut frame
         
-        frame = frame[-400:,:]
+        frame = frame[0:200,0:len(frame)/2]
         self.img = frame
         
             #call thresholdImg function and return the thresholded image as tImage
@@ -74,11 +75,17 @@ class blobDetectorNode:
         
             x,y,w,h = cv2.boundingRect(largest)
             cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
-            centerX = x+w/2
-            centerY = y+h/2
-        
+            centerX = x  + w/2
+            centerY = y + h/2
+            centerXScreen = len(frame[0])/2
+            #new shit with small box
+            self.ideal_dist = 200
+            ideal_pos = x + self.ideal_dist
+
+            self.error_dist = ideal_pos - centerXScreen
+                    
             #find distance from center
-            self.error_dist = centerX-len(frame[0])/2
+            #self.error_dist = centerX - len(frame[0])/2
             self.track_pub.publish(self.error_dist)
             rospy.loginfo(self.error_dist)
         #display error on top of box

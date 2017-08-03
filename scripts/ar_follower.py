@@ -22,7 +22,7 @@ class ArFollowerNode:
             self.frames_since_seen = 0
             marker = None
             for m in markers:
-                if m.id == 0:
+                if m.id == 7:
                     marker = m
             if marker is None:
                 return

@@ -16,12 +16,7 @@ class MotionPlannerNode:
         self.minimum_repel_force = 0.02
         self.forward_force = 5
         self.num_samples = 10 # n largest magnitudes will be used
-        self.max_speed = 1.2
-        self.max_steering = 0.32
-
-        self.K_d = 0.05
-        self.prev = 0
-
+        
     def scanner_callback(self, msg):
         cutoff = np.pi / 4
         ranges = msg.ranges[int(cutoff / msg.angle_increment): -int(cutoff / msg.angle_increment)]
@@ -37,7 +32,10 @@ class MotionPlannerNode:
         x = np.sin(angles) * ranges
         y = np.cos(angles) * ranges
         
-        
+        fov = np.pi / 12 # 22.5 degrees on each side for 45 degrees total
+        front = np.arange(int((len(x) / 2) - (fov / msg.angle_increment)), int((len(x) / 2) + (fov / msg.angle_increment)))
+        x[front] = x[front] * 4
+        y[front] = y[front] * 4
 
         #magnitudes = np.sqrt(x ** 2 + y ** 2)
         #samples = heapq.nlargest(len(magnitudes), xrange(len(magnitudes)), magnitudes.take)
@@ -58,33 +56,6 @@ class MotionPlannerNode:
         msg.data = [theta, magnitude]
         self.cmd_pub.publish(msg)
         
-'''
-        theta += self.K_d * (self.prev - theta)
-
-        # minimum and maximum bounding for speed/steering
-        speed = max(-self.max_speed, min(magnitude, self.max_speed))
-        steering_angle = max(-self.max_steering, min(theta, self.max_steering))
-        
-        self.prev = theta
-
-        if msg.ranges[len(msg.ranges) / 2] < 0.75:
-            steering_angle = self.max_steering
-        
-        if speed < 0.85:
-            pass#return
-
-        # publish
-        cmd = AckermannDriveStamped()
-        cmd.header.stamp = rospy.Time.now()
-        cmd.drive.speed = speed
-        cmd.drive.steering_angle = steering_angle
-        self.cmd_pub.publish(cmd)
-
-        rospy.loginfo('x_sum: %s -- y_sum: %s -- magnitude: %s -- theta: %s',
-                x_sum, y_sum, magnitude, theta)
-        rospy.loginfo('speed: %s -- steering: %s',
-                speed, steering_angle)
-'''
 if __name__ == '__main__':
     rospy.init_node('potential_field')
     node = MotionPlannerNode()
