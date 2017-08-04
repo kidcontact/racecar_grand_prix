@@ -8,25 +8,37 @@ from std_msgs.msg import Int32
 import threading
 
 class TrackPosition(Enum):
-    NOT_STARTED = -1
-    START = 0
-    BRIDGE = 1
-    YELLOW_BRICK = 2
-    AFTER_WATER = 3
+    NOT_STARTED   = 0
+    ROLLING_WEAVE = 1
+    HAIRPIN_TURN  = 2
+    OVERPASS      = 3
+    WATER_HAZARD  = 4
+    UNDERPASS     = 5
+    BOA_BASIN     = 6
+    MESH_WALL     = 7
+    FINISH_LINE   = 8
 
 tag_ids = {
-    5: TrackPosition.BRIDGE,
-    6: TrackPosition.YELLOW_BRICK,
-    7: TrackPosition.AFTER_WATER
+        16: TrackPosition.FINISH_LINE,
+        17: TrackPosition.ROLLING_WEAVE,
+        18: TrackPosition.HAIRPIN_TURN,
+        19: TrackPosition.OVERPASS,
+        20: TrackPosition.WATER_HAZARD,
+        21: TrackPosition.UNDERPASS,
+        22: TrackPosition.BOA_BASIN,
+        23: TrackPosition.MESH_WALL
 }
 
 class ArLocalizationNode:
     def __init__(self):
-        self.track_position = TrackPosition.AFTER_WATER
+        self.track_position = TrackPosition.WATER_HAZARD
+
         self.position_pub = rospy.Publisher('track_position', Int32, queue_size=1)
         self.position_pub.publish(self.track_position.value)
         rospy.Subscriber('/ar_pose_marker', AlvarMarkers, self.marker_callback)
         
+        self.last_seen = None
+
         t = threading.Thread(target=self.publish_position)
         t.daemon = True
         t.start()
@@ -39,9 +51,17 @@ class ArLocalizationNode:
 
     def marker_callback(self, msg):
         markers = msg.markers
+        found = None
         for m in markers:
             if m.id in tag_ids:
-                self.track_position = tag_ids[m.id]
+                self.last_seen = m
+                found = m
+                break
+        
+        if found is None and self.last_seen is not None:
+            self.track_position = tag_ids[self.last_seen.id]
+            self.last_seen = None
+        
 
 if __name__ == '__main__':
     rospy.init_node('ar_localization')
