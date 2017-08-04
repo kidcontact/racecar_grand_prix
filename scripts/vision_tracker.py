@@ -41,7 +41,7 @@ class blobDetectorNode:
         frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
             #cut frame
         
-        frame = frame[-340:-190, : ]
+        frame = frame[-340:-258, : ]
         self.img = frame
         
             #call thresholdImg function and return the thresholded image as tImage
@@ -87,7 +87,7 @@ class blobDetectorNode:
                 #find distance from center
                 self.error_dist = (cx - (self.dist_off * centerXScreen)) * -1
                 self.track_pub.publish(self.error_dist)
-                rospy.loginfo(self.error_dist)
+                #rospy.loginfo(self.error_dist)
             #display error on top of box
         """ RIP RECT 
             text = str(self.error_dist)

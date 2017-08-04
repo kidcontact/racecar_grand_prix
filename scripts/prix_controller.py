@@ -29,13 +29,25 @@ class PrixControllerNode:
                 TrackPosition.MESH_WALL: ControllerMode.WALL_FOLLOW,
                 TrackPosition.FINISH_LINE: ControllerMode.NONE
         }
+        self.danger_dist_at_position = {
+                TrackPosition.NOT_STARTED: 1,
+                TrackPosition.ROLLING_WEAVE: 1.25,
+                TrackPosition.HAIRPIN_TURN: 1,
+                TrackPosition.OVERPASS: 1,
+                TrackPosition.WATER_HAZARD: 1.7,
+                TrackPosition.UNDERPASS: 1,
+                TrackPosition.BOA_BASIN: 1,
+                TrackPosition.MESH_WALL: 1,
+                TrackPosition.FINISH_LINE: 1
+        }
         self.controller_mode = self.mode_at_position[self.track_position]
         self.cmd_pub = rospy.Publisher('/ackermann_cmd_mux/input/navigation', AckermannDriveStamped, queue_size=5)
         
         self.max_speed = 1
         self.min_speed = 1
         self.max_steering = 0.34
-        rospy.set_param('danger_distance', 2) # safety controller
+        rospy.set_param('danger_distance', # safety controller    
+                self.danger_dist_at_position[self.track_position])
 
         DriveValues= namedlist('DriveValues', ['p', 'd', 'i',
             ('max_speed', self.max_speed),
@@ -43,9 +55,9 @@ class PrixControllerNode:
             ('prev', 0),
             ('derivator', 0),
             ('integrator', 0)])
-        self.K_vision    = DriveValues(p = 0.002, d = 0.00003, i = 0, max_speed = 2.5, min_speed = 2)
-        self.K_wall      = DriveValues(p = 0.1, d = 0, i = 0, max_speed = 3, min_speed = 3)
-        self.K_potential = DriveValues(p = 4.0, d = 0.2, i = 0, max_speed = 2, min_speed = 2)
+        self.K_vision    = DriveValues(p = 0.002, d = 0.000032, i = 0, max_speed = 4, min_speed = 3)
+        self.K_wall      = DriveValues(p = 0.4, d = 0, i = 0, max_speed = 2, min_speed = 2)
+        self.K_potential = DriveValues(p = 4.0, d = 0.2, i = 0, max_speed = 4, min_speed = 2)
         
         self.drive_enabled = False
 
@@ -56,7 +68,7 @@ class PrixControllerNode:
         rospy.Subscriber('/joy', Joy, self.joy_callback) 
 
     def pid_control(self, error, speed, K):
-        if error < 130 and error > -130:
+        if self.controller_mode == ControllerMode.VISION and error < 135 and error > -135:
             error = 0
         K.integrator += error
         K.derivator = K.prev - error
@@ -97,6 +109,8 @@ class PrixControllerNode:
     def track_position_callback(self, msg):
         self.track_position = TrackPosition(msg.data)
         self.controller_mode = self.mode_at_position[self.track_position]
+        rospy.set_param('danger_distance', # safety controller    
+                self.danger_dist_at_position[self.track_position])
 
     def vision_error_callback(self, msg):
         if self.controller_mode == ControllerMode.VISION:

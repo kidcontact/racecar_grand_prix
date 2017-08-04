@@ -53,14 +53,9 @@ class ArLocalizationNode:
         markers = msg.markers
         found = None
         for m in markers:
-            if m.id in tag_ids:
-                self.last_seen = m
-                found = m
+            if m.id in tag_ids and m.pose.pose.position.z < 1.5:
+                self.track_position = tag_ids[m.id]
                 break
-        
-        if found is None and self.last_seen is not None:
-            self.track_position = tag_ids[self.last_seen.id]
-            self.last_seen = None
         
 
 if __name__ == '__main__':
