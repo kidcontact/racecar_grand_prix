@@ -50,7 +50,7 @@ class wallController:
 		
                 self.error *= scale
 		
-                print 'error: ' + str(self.error) + ' -- ' + side
+                #print 'error: ' + str(self.error) + ' -- ' + side
                 self.cmd_pub.publish(self.error)
 
 if __name__ == "__main__":

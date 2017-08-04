@@ -10,19 +10,32 @@ from sensor_msgs.msg import Joy
 from ar_localization import TrackPosition
 
 class ControllerMode(Enum):
-    POTENTIAL = 0
-    WALL_FOLLOW = 1
-    VISION = 2
+    NONE        = 0
+    POTENTIAL   = 1
+    WALL_FOLLOW = 2
+    VISION      = 3
 
 class PrixControllerNode:
     def __init__(self):
         self.track_position = TrackPosition.NOT_STARTED
-        self.controller_mode = self.position_to_controller_mode(self.track_position)
+        self.mode_at_position = {
+                TrackPosition.NOT_STARTED: ControllerMode.NONE,
+                TrackPosition.ROLLING_WEAVE: ControllerMode.POTENTIAL,
+                TrackPosition.HAIRPIN_TURN: ControllerMode.POTENTIAL,
+                TrackPosition.OVERPASS: ControllerMode.POTENTIAL,
+                TrackPosition.WATER_HAZARD: ControllerMode.VISION,
+                TrackPosition.UNDERPASS: ControllerMode.POTENTIAL,
+                TrackPosition.BOA_BASIN: ControllerMode.WALL_FOLLOW,
+                TrackPosition.MESH_WALL: ControllerMode.WALL_FOLLOW,
+                TrackPosition.FINISH_LINE: ControllerMode.NONE
+        }
+        self.controller_mode = self.mode_at_position[self.track_position]
         self.cmd_pub = rospy.Publisher('/ackermann_cmd_mux/input/navigation', AckermannDriveStamped, queue_size=5)
         
         self.max_speed = 1
         self.min_speed = 1
         self.max_steering = 0.34
+        rospy.set_param('danger_distance', 2) # safety controller
 
         DriveValues= namedlist('DriveValues', ['p', 'd', 'i',
             ('max_speed', self.max_speed),
@@ -30,9 +43,9 @@ class PrixControllerNode:
             ('prev', 0),
             ('derivator', 0),
             ('integrator', 0)])
-        self.K_vision    = DriveValues(p = -0.01, d = 0, i = 0, max_speed = 1, min_speed = 1)
+        self.K_vision    = DriveValues(p = 0.002, d = 0.00003, i = 0, max_speed = 2.5, min_speed = 2)
         self.K_wall      = DriveValues(p = 0.1, d = 0, i = 0, max_speed = 3, min_speed = 3)
-        self.K_potential = DriveValues(p = 4.0, d = 0.2, i = 0.0, max_speed = 3, min_speed = 3)
+        self.K_potential = DriveValues(p = 4.0, d = 0.2, i = 0, max_speed = 2, min_speed = 2)
         
         self.drive_enabled = False
 
@@ -43,13 +56,19 @@ class PrixControllerNode:
         rospy.Subscriber('/joy', Joy, self.joy_callback) 
 
     def pid_control(self, error, speed, K):
+        if error < 130 and error > -130:
+            error = 0
         K.integrator += error
         K.derivator = K.prev - error
         K.prev = error
+
         steering_angle = K.p * error + K.i * K.integrator + K.d * K.derivator
 
         # bound steering angle and speed to saturation value
-        steering_angle = max(-self.max_steering, min(steering_angle, self.max_steering))
+        max_steering = self.max_steering
+        if self.controller_mode == ControllerMode.VISION:
+            pass#max_steering *= 0.6
+        steering_angle = max(-max_steering, min(steering_angle, max_steering))
         if steering_angle != 0:
             speed = 0.4 / abs(steering_angle)
         
@@ -64,27 +83,20 @@ class PrixControllerNode:
         if self.drive_enabled:
             self.cmd_pub.publish(drive_cmd)
     
-    def position_to_controller_mode(self, track_position):
-        if track_position == TrackPosition.START or track_position == TrackPosition.BRIDGE:
-            return ControllerMode.POTENTIAL
-        elif track_position == TrackPosition.AFTER_WATER:
-            return ControllerMode.WALL_FOLLOW
-        elif track_position == TrackPosition.YELLOW_BRICK:
-            return ControllerMode.VISION
-
     def joy_callback(self, msg):
         buttons = msg.buttons
         if buttons[2] == 1: # x
-            self.K_potential.integrator = 0
-            self.K_potential.derivator = 0
-            self.K_potential.prev = 0
+            for K in (self.K_potential, self.K_wall, self.K_vision):
+                K.prev = 0
+                K.derivator = 0
+                K.integrator = 0
             self.drive_enabled = True
         elif buttons[3] == 1: # y
             self.drive_enabled = False
 
     def track_position_callback(self, msg):
         self.track_position = TrackPosition(msg.data)
-        self.controller_mode = self.position_to_controller_mode(self.track_position)
+        self.controller_mode = self.mode_at_position[self.track_position]
 
     def vision_error_callback(self, msg):
         if self.controller_mode == ControllerMode.VISION:

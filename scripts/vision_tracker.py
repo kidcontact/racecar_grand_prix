@@ -21,7 +21,8 @@ class blobDetectorNode:
         
         #for orange: 0,175,105     25, 255, 255
         #for green 50,50,75   100,110,10
-        self.HSV_RANGES = [np.array([20,0,0]), np.array([70,255,255])]
+
+        self.HSV_RANGES = [np.array([20,100,100]), np.array([40,255,255])]
         #self.cmd_pub = rospy.Publisher("ackermann_cmd", AckermannDriveStamped, queue_size=10)
         self.pub = rospy.Publisher('vision_test', Image, queue_size=10)
         self.track_pub = rospy.Publisher('vision_error', Float32, queue_size=10)
@@ -30,7 +31,7 @@ class blobDetectorNode:
         self.error_dist = 0
         self.track_pos = 0
         self.error_dist = 0
-
+        self.dist_off = 1
     def blobDetectorCallback(self, msg):
         #while self.TrackPos == TrackPosition.YELLOW_BRICK:
         #self.TrackPos = TrackPosition(msg.data)
@@ -40,7 +41,7 @@ class blobDetectorNode:
         frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
             #cut frame
         
-        frame = frame[0:200,0:len(frame)/2]
+        frame = frame[-340:-190, : ]
         self.img = frame
         
             #call thresholdImg function and return the thresholded image as tImage
@@ -72,23 +73,23 @@ class blobDetectorNode:
         largest=30
         if len(contours)>0:
             largest = self.sortContours(contours)[0]
-        
-            x,y,w,h = cv2.boundingRect(largest)
-            cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
-            centerX = x  + w/2
-            centerY = y + h/2
-            centerXScreen = len(frame[0])/2
-            #new shit with small box
-            self.ideal_dist = 200
-            ideal_pos = x + self.ideal_dist
-
-            self.error_dist = ideal_pos - centerXScreen
+            
+            m = cv2.moments(largest)
+            if m['m00'] != 0:
+                cx = int(m['m10']/m['m00'])
+                #x,y,w,h = cv2.boundingRect(largest)
+                #cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
+                #centerX = x  + w/2
+                #centerY = y + h/2
+                centerXScreen = len(frame[0])/2
+            
                     
-            #find distance from center
-            #self.error_dist = centerX - len(frame[0])/2
-            self.track_pub.publish(self.error_dist)
-            rospy.loginfo(self.error_dist)
-        #display error on top of box
+                #find distance from center
+                self.error_dist = (cx - (self.dist_off * centerXScreen)) * -1
+                self.track_pub.publish(self.error_dist)
+                rospy.loginfo(self.error_dist)
+            #display error on top of box
+        """ RIP RECT 
             text = str(self.error_dist)
             linetype = 4
             font = cv2.FONT_HERSHEY_SIMPLEX
@@ -97,7 +98,7 @@ class blobDetectorNode:
             point = (x-100 ,y)
             cv2.putText(frame,text,point,font,fontScale,color,linetype)
             #cv2.imshow('image', frame)
-    
+        """
         return frame
         """ this stuff is driving stuff
         
