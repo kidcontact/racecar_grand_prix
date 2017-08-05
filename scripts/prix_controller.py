@@ -19,25 +19,25 @@ class PrixControllerNode:
     def __init__(self):
         self.track_position = TrackPosition.NOT_STARTED
         self.mode_at_position = {
-                TrackPosition.NOT_STARTED: ControllerMode.NONE,
+                TrackPosition.NOT_STARTED: ControllerMode.POTENTIAL,
                 TrackPosition.ROLLING_WEAVE: ControllerMode.POTENTIAL,
                 TrackPosition.HAIRPIN_TURN: ControllerMode.POTENTIAL,
                 TrackPosition.OVERPASS: ControllerMode.POTENTIAL,
                 TrackPosition.WATER_HAZARD: ControllerMode.VISION,
                 TrackPosition.UNDERPASS: ControllerMode.POTENTIAL,
-                TrackPosition.BOA_BASIN: ControllerMode.WALL_FOLLOW,
-                TrackPosition.MESH_WALL: ControllerMode.WALL_FOLLOW,
-                TrackPosition.FINISH_LINE: ControllerMode.NONE
+                TrackPosition.BOA_BASIN: ControllerMode.POTENTIAL,
+                TrackPosition.MESH_WALL: ControllerMode.POTENTIAL,
+                TrackPosition.FINISH_LINE: ControllerMode.POTENTIAL
         }
         self.danger_dist_at_position = {
                 TrackPosition.NOT_STARTED: 1,
-                TrackPosition.ROLLING_WEAVE: 1.25,
-                TrackPosition.HAIRPIN_TURN: 1,
-                TrackPosition.OVERPASS: 1,
-                TrackPosition.WATER_HAZARD: 1.7,
+                TrackPosition.ROLLING_WEAVE: 0.5,
+                TrackPosition.HAIRPIN_TURN: 0.5,
+                TrackPosition.OVERPASS: 0.5,
+                TrackPosition.WATER_HAZARD: 1,
                 TrackPosition.UNDERPASS: 1,
                 TrackPosition.BOA_BASIN: 1,
-                TrackPosition.MESH_WALL: 1,
+                TrackPosition.MESH_WALL: 0.25,
                 TrackPosition.FINISH_LINE: 1
         }
         self.controller_mode = self.mode_at_position[self.track_position]
@@ -55,9 +55,9 @@ class PrixControllerNode:
             ('prev', 0),
             ('derivator', 0),
             ('integrator', 0)])
-        self.K_vision    = DriveValues(p = 0.002, d = 0.000032, i = 0, max_speed = 4, min_speed = 3)
-        self.K_wall      = DriveValues(p = 0.4, d = 0, i = 0, max_speed = 2, min_speed = 2)
-        self.K_potential = DriveValues(p = 4.0, d = 0.2, i = 0, max_speed = 4, min_speed = 2)
+        self.K_vision    = DriveValues(p = 0.002, d = 0.000032, i = 0, max_speed = 2.4, min_speed = 2.4)
+        self.K_wall      = DriveValues(p = 0.4, d = 0.001, i = 0, max_speed = 2, min_speed = 2)
+        self.K_potential = DriveValues(p = 3.8, d = 0.2, i = 0, max_speed = 4, min_speed = 2)
         
         self.drive_enabled = False
 
@@ -68,26 +68,45 @@ class PrixControllerNode:
         rospy.Subscriber('/joy', Joy, self.joy_callback) 
 
     def pid_control(self, error, speed, K):
-        if self.controller_mode == ControllerMode.VISION and error < 135 and error > -135:
+        if self.controller_mode == ControllerMode.VISION and error < 130 and error > -130:
             error = 0
         K.integrator += error
         K.derivator = K.prev - error
         K.prev = error
 
         steering_angle = K.p * error + K.i * K.integrator + K.d * K.derivator
+        
+        min_speed = K.min_speed
+        max_speed = K.max_speed
+        if self.track_position == TrackPosition.ROLLING_WEAVE or self.track_position == TrackPosition.HAIRPIN_TURN:
+            min_speed = 1.25
+            max_speed = 3.5
+        elif self.track_position == TrackPosition.OVERPASS:
+            max_speed = 3
+        
+        if self.track_position == TrackPosition.HAIRPIN_TURN:
+            min_speed = 2
 
         # bound steering angle and speed to saturation value
         max_steering = self.max_steering
-        if self.controller_mode == ControllerMode.VISION:
-            pass#max_steering *= 0.6
+        if self.track_position == TrackPosition.OVERPASS:
+            max_steering = 0.15
         steering_angle = max(-max_steering, min(steering_angle, max_steering))
-        if steering_angle != 0:
+        sign = speed / abs(speed)
+        if abs(steering_angle) > 0.1:
             speed = 0.4 / abs(steering_angle)
+        speed *= sign
+
+        print('SPEED_BEFORE: ' + str(speed)) 
+        if self.controller_mode == ControllerMode.POTENTIAL:
+            if speed > 0 and speed < min_speed:
+                speed = min_speed
+        elif speed < min_speed:
+            speed = min_speed
+        speed = max(-max_speed, min(speed, max_speed))
         
-        if speed < K.min_speed:
-            speed = K.min_speed
-        speed = max(-K.max_speed, min(speed, K.max_speed))
-        
+        print('SPEED: ' + str(speed))
+
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = rospy.Time.now()
         drive_cmd.drive.speed = speed

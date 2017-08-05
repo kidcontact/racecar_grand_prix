@@ -11,7 +11,7 @@ class ArFollowerNode:
     def __init__(self):
         self.cmd_pub = rospy.Publisher('/ackermann_cmd_mux/input/navigation', AckermannDriveStamped, queue_size=1)
         rospy.Subscriber('ar_pose_marker', AlvarMarkers, self.marker_callback)
-        rospy.set_param('danger_distance', 0.35) # safety controller
+        rospy.set_param('danger_distance', 0) # safety controller
         self.frame_timeout = 3
         self.frames_since_seen = 0
 
@@ -23,7 +23,7 @@ class ArFollowerNode:
             self.frames_since_seen = 0
             marker = None
             for m in markers:
-                if m.id == 7:
+                if m.id == 0:
                     marker = m
             if marker is None:
                 return
@@ -38,8 +38,10 @@ class ArFollowerNode:
             drive_cmd.drive.speed = math.log(position.z + 1) *0.5
             if drive_cmd.drive.speed > 1:
                 drive_cmd.drive.speed = 1
+            if position.z < 0.9:
+                drive_cmd.drive.speed = 0
             #drive_cmd.drive.acceleration = 0.5
-            self.steering_angle = -math.atan2(position.x, position.z) * 0.75
+            self.steering_angle = -math.atan2(position.x, position.z) * 0.9
             drive_cmd.drive.steering_angle = self.steering_angle
 
         else:
