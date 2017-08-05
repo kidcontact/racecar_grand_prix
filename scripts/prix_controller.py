@@ -55,7 +55,7 @@ class PrixControllerNode:
             ('prev', 0),
             ('derivator', 0),
             ('integrator', 0)])
-        self.K_vision    = DriveValues(p = 0.002, d = 0.000032, i = 0, max_speed = 2.4, min_speed = 2.4)
+        self.K_vision    = DriveValues(p = 0.002, d = 0.000032, i = 0, max_speed = 2.3, min_speed = 2.3)
         self.K_wall      = DriveValues(p = 0.4, d = 0.001, i = 0, max_speed = 2, min_speed = 2)
         self.K_potential = DriveValues(p = 3.8, d = 0.2, i = 0, max_speed = 4, min_speed = 2)
         
