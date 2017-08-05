@@ -31,7 +31,7 @@ tag_ids = {
 
 class ArLocalizationNode:
     def __init__(self):
-        self.track_position = TrackPosition.ROLLING_WEAVE
+        self.track_position = TrackPosition.FINISH_LINE
 
         self.position_pub = rospy.Publisher('track_position', Int32, queue_size=1)
         self.position_pub.publish(self.track_position.value)
@@ -55,9 +55,12 @@ class ArLocalizationNode:
         for m in markers:
             if m.id in tag_ids and m.pose.pose.position.z < 3.5:
                 if tag_ids[m.id] == TrackPosition.WATER_HAZARD:
-                    if m.pose.pose.position.z < 2.7:
+                    if m.pose.pose.position.z < 3:
                         self.last_seen = m
                         found = m
+                elif tag_ids[m.id] == TrackPosition.UNDERPASS:
+                    if m.pose.pose.position.z < 3:
+                        self.last_seen = m
                 else:
                     #self.track_position = tag_ids[m.id]
                     self.last_seen = m

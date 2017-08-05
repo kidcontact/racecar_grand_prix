@@ -41,7 +41,7 @@ class blobDetectorNode:
         frame = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
             #cut frame
         
-        frame = frame[-350:-250, 150: ]
+        frame = frame[-375:-260, 150: ]
         self.img = frame
         
             #call thresholdImg function and return the thresholded image as tImage

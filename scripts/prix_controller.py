@@ -55,9 +55,9 @@ class PrixControllerNode:
             ('prev', 0),
             ('derivator', 0),
             ('integrator', 0)])
-        self.K_vision    = DriveValues(p = 0.002, d = 0.000032, i = 0, max_speed = 2.3, min_speed = 2.3)
-        self.K_wall      = DriveValues(p = 0.4, d = 0.001, i = 0, max_speed = 2, min_speed = 2)
-        self.K_potential = DriveValues(p = 3.8, d = 0.2, i = 0, max_speed = 4, min_speed = 2)
+        self.K_vision    = DriveValues(p = 0.002, d = 0.000032, i = 0, max_speed = 2.6, min_speed = 2.6)
+        self.K_wall      = DriveValues(p = 0.4, d = 0.001, i = 0, max_speed = 2.3, min_speed = 2.3)
+        self.K_potential = DriveValues(p = 3.8, d = 0.12, i = 0, max_speed = 4, min_speed = 2.25)
         
         self.drive_enabled = False
 
@@ -68,8 +68,9 @@ class PrixControllerNode:
         rospy.Subscriber('/joy', Joy, self.joy_callback) 
 
     def pid_control(self, error, speed, K):
+        print('ERROR: ' + str(error))
         if self.controller_mode == ControllerMode.VISION and error < 130 and error > -130:
-            error = 0
+            pass#error = 0
         K.integrator += error
         K.derivator = K.prev - error
         K.prev = error
@@ -79,10 +80,10 @@ class PrixControllerNode:
         min_speed = K.min_speed
         max_speed = K.max_speed
         if self.track_position == TrackPosition.ROLLING_WEAVE or self.track_position == TrackPosition.HAIRPIN_TURN:
-            min_speed = 1.25
-            max_speed = 3.5
+            min_speed = 1.8
+            max_speed = 3.15
         elif self.track_position == TrackPosition.OVERPASS:
-            max_speed = 3
+            max_speed = 2.65
         
         if self.track_position == TrackPosition.HAIRPIN_TURN:
             min_speed = 2
@@ -90,22 +91,19 @@ class PrixControllerNode:
         # bound steering angle and speed to saturation value
         max_steering = self.max_steering
         if self.track_position == TrackPosition.OVERPASS:
-            max_steering = 0.15
+            max_steering = 0.1
         steering_angle = max(-max_steering, min(steering_angle, max_steering))
         sign = speed / abs(speed)
         if abs(steering_angle) > 0.1:
             speed = 0.4 / abs(steering_angle)
         speed *= sign
 
-        print('SPEED_BEFORE: ' + str(speed)) 
         if self.controller_mode == ControllerMode.POTENTIAL:
             if speed > 0 and speed < min_speed:
                 speed = min_speed
         elif speed < min_speed:
             speed = min_speed
         speed = max(-max_speed, min(speed, max_speed))
-        
-        print('SPEED: ' + str(speed))
 
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = rospy.Time.now()
